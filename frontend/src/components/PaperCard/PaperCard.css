@@ -1,0 +1,67 @@
+PaperCard.css
+
+.paper-card {
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  background: white;
+}
+
+.paper-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.paper-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.paper-card__source {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #667085;
+  font-weight: 600;
+}
+
+.paper-card__score {
+  font-size: 0.75rem;
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+.paper-card__title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem 0;
+  color: #101828;
+}
+
+.paper-card__authors {
+  font-size: 0.85rem;
+  color: #667085;
+  margin: 0 0 0.5rem 0;
+}
+
+.paper-card__abstract {
+  font-size: 0.9rem;
+  color: #344054;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.paper-card__badge {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  background: #ecfdf3;
+  color: #027a48;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
