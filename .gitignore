@@ -1,0 +1,66 @@
+# ── Environment / secrets ────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+*.pem
+*.key
+
+# ── Python (backend/, rag_engine/) ───────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+pip-wheel-metadata/
+
+# ── FAISS index + generated data (regenerable via ingest pipeline) ─
+data/
+*.faiss
+*.faiss.meta.pkl
+backend/rag_engine/data/
+
+# ── Downloaded ML models (sentence-transformers cache, if local) ──
+models/
+.cache/
+
+# ── PostgreSQL local data (if running via local install, not Docker)
+*.sql.bak
+pgdata/
+
+# ── Node / React (frontend/) ─────────────────────────────────────
+node_modules/
+dist/
+dist-ssr/
+build/
+.vite/
+*.local
+
+# ── Editor / OS ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ── Logs ──────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# ── Alembic (keep migration scripts, ignore local state if any) ──
+# (no ignores needed here yet — versions/ should be committed)
+
+# ── Jupyter (if used for experimentation) ─────────────────────────
+.ipynb_checkpoints/
