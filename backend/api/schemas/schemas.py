@@ -1,72 +1,133 @@
 """
-schemas.py (rag_engine.api)
-Plain dataclass I/O contracts for the RAG service layer. Kept separate from
-Member 2's Pydantic schemas (api/schemas/schemas.py) so rag_engine has no
-dependency on FastAPI/Pydantic — it's a standalone Python package that
-Member 2's routers happen to call into. Convert to/from Pydantic models at
-the router boundary.
+schemas.py
+Pydantic request/response models for the API. Kept in one file since the
+schema set is small; split by domain (paper_schemas.py, etc.) if it grows.
 """
 
-from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
+from datetime import datetime
+from typing import List, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
-@dataclass
-class IngestRequest:
-    query: str
-    sources: Optional[List[str]] = None  # ["arxiv", "semantic_scholar"], defaults to both
-    max_results: int = 10
+# ---------------------------------------------------------------------------
+# Auth
+# ---------------------------------------------------------------------------
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8)
+    full_name: Optional[str] = None
 
 
-@dataclass
-class IngestedPaperResult:
-    source_id: str
-    source: str
+class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    email: EmailStr
+    full_name: Optional[str]
+    created_at: datetime
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+# ---------------------------------------------------------------------------
+# Papers
+# ---------------------------------------------------------------------------
+class PaperBase(BaseModel):
     title: str
-    authors: List[str]
-    abstract: str
-    pdf_url: Optional[str]
-    published_date: Optional[str]
-    num_chunks_indexed: int
-    status: str  # "indexed" | "skipped_no_pdf" | "failed"
-    error: Optional[str] = None
+    authors: List[str] = []
+    abstract: Optional[str] = None
+    pdf_url: Optional[str] = None
+    published_date: Optional[str] = None
+    source: str
+    source_id: str
 
 
-@dataclass
-class IngestResult:
-    query: str
-    papers: List[IngestedPaperResult] = field(default_factory=list)
+class PaperResponse(PaperBase):
+    model_config = ConfigDict(from_attributes=True)
 
-    @property
-    def succeeded_count(self) -> int:
-        return sum(1 for p in self.papers if p.status == "indexed")
+    id: UUID
+    ai_summary: Optional[str] = None
+    is_indexed: str
+    created_at: datetime
 
 
-@dataclass
-class SearchHit:
+class PaperListResponse(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    results: List[PaperResponse]
+
+
+# ---------------------------------------------------------------------------
+# Search
+# ---------------------------------------------------------------------------
+class SearchRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=500)
+    sources: Optional[List[str]] = None  # e.g. ["arxiv", "semantic_scholar"]
+    top_k: int = Field(default=10, ge=1, le=50)
+
+
+class SearchResultItem(BaseModel):
     chunk_text: str
     score: float
-    source_id: str
-    title: Optional[str]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    paper: PaperResponse
 
 
-@dataclass
-class SearchServiceResult:
+class SearchResponse(BaseModel):
     query: str
-    hits: List[SearchHit] = field(default_factory=list)
+    results: List[SearchResultItem]
 
 
-@dataclass
-class SummaryServiceResult:
-    source_id: str
-    title: str
-    summary_text: str
-    was_truncated: bool
+# ---------------------------------------------------------------------------
+# Summary / QA
+# ---------------------------------------------------------------------------
+class SummaryRequest(BaseModel):
+    paper_id: UUID
+    force_regenerate: bool = False
 
 
-@dataclass
-class QAServiceResult:
+class SummaryResponse(BaseModel):
+    paper_id: UUID
+    paper_title: str
+    summary: str
+    was_cached: bool
+
+
+class QARequest(BaseModel):
+    question: str = Field(min_length=1, max_length=1000)
+    paper_id: Optional[UUID] = None  # restrict Q&A to a single paper if set
+
+
+class QAResponseSchema(BaseModel):
     question: str
     answer: str
-    source_ids: List[str] = field(default_factory=list)
+    source_paper_ids: List[UUID] = []
+
+
+# ---------------------------------------------------------------------------
+# History
+# ---------------------------------------------------------------------------
+class QueryLogResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    query_type: str
+    query_text: str
+    response_text: Optional[str]
+    paper_id: Optional[UUID]
+    created_at: datetime
+
+
+class HistoryListResponse(BaseModel):
+    total: int
+    results: List[QueryLogResponse]
