@@ -14,7 +14,7 @@ const apiClient = axios.create({
 
 // Attach the bearer token (if present) to every outgoing request.
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access_token");
+  const token = sessionStorage.getItem("access_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -26,7 +26,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("access_token");
+      sessionStorage.removeItem("access_token");
       window.dispatchEvent(new CustomEvent("auth:expired"));
     }
     return Promise.reject(error);
@@ -38,7 +38,7 @@ apiClient.interceptors.response.use(
 // ---------------------------------------------------------------------------
 export async function login(email, password) {
   const { data } = await apiClient.post("/api/auth/login", { email, password });
-  localStorage.setItem("access_token", data.access_token);
+  sessionStorage.setItem("access_token", data.access_token);
   return data;
 }
 
@@ -52,7 +52,7 @@ export async function register(email, password, fullName) {
 }
 
 export function logout() {
-  localStorage.removeItem("access_token");
+  sessionStorage.removeItem("access_token");
 }
 
 // ---------------------------------------------------------------------------

@@ -1,7 +1,3 @@
-// App.jsx
-// Root component for the Autonomous Research Agent.
-// Handles authentication and switching between Dashboard and PaperDetail.
-
 import React, { useState } from "react";
 import { AppProvider, useAppContext } from "./context/AppContext";
 import Dashboard from "./pages/Dashboard";
@@ -9,66 +5,193 @@ import PaperDetail from "./pages/PaperDetail";
 import "./App.css";
 
 
-/* =========================================
-   Authentication Gate
-========================================= */
-
 function AuthGate({ children }) {
-  const { isAuthenticated, login, authError } = useAppContext();
+
+  const {
+    isAuthenticated,
+    login,
+    register,
+    authError,
+  } = useAppContext();
+
+
+  const [isSignUp, setIsSignUp] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   if (isAuthenticated) {
     return children;
   }
 
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
+
     e.preventDefault();
-    login(email, password);
+
+    setSuccessMessage("");
+    setIsSubmitting(true);
+
+
+    if (isSignUp) {
+
+      const success = await register(
+        email,
+        password,
+        fullName
+      );
+
+      if (success) {
+
+        setSuccessMessage(
+          "Account created successfully. Please sign in."
+        );
+
+        // Switch back to login.
+        setIsSignUp(false);
+
+        setPassword("");
+        setFullName("");
+      }
+
+    } else {
+
+      await login(email, password);
+    }
+
+    setIsSubmitting(false);
   };
 
-  return (
-    <div className="auth-page">
 
-      {/* Background decoration */}
-      <div className="auth-background-circle auth-circle-one"></div>
-      <div className="auth-background-circle auth-circle-two"></div>
+  const switchMode = () => {
+
+    setIsSignUp(!isSignUp);
+
+    setEmail("");
+    setPassword("");
+    setFullName("");
+
+    setSuccessMessage("");
+  };
+
+
+  return (
+
+    <div className="auth-page">
 
       <div className="auth-card">
 
-        {/* Logo */}
-        <div className="auth-logo">
-          <span>AI</span>
-        </div>
+        {/* Logo / Branding */}
 
-        {/* Heading */}
-        <div className="auth-header">
-          <h1>Welcome back</h1>
+        <div className="auth-brand">
+
+          <div className="auth-logo">
+            🔬
+          </div>
+
+          <h1>
+            Autonomous Research Agent
+          </h1>
 
           <p>
-            Sign in to your Autonomous Research Agent
+            Discover, analyze and understand research papers with AI.
           </p>
+
         </div>
 
-        {/* Login Form */}
+
+        {/* Tabs */}
+
+        <div className="auth-tabs">
+
+          <button
+            type="button"
+            className={!isSignUp ? "auth-tab active" : "auth-tab"}
+            onClick={() => {
+              setIsSignUp(false);
+              setSuccessMessage("");
+            }}
+          >
+            Sign In
+          </button>
+
+
+          <button
+            type="button"
+            className={isSignUp ? "auth-tab active" : "auth-tab"}
+            onClick={() => {
+              setIsSignUp(true);
+              setSuccessMessage("");
+            }}
+          >
+            Create Account
+          </button>
+
+        </div>
+
+
+        {/* Heading */}
+
+        <div className="auth-heading">
+
+          <h2>
+            {isSignUp ? "Create your account" : "Welcome back"}
+          </h2>
+
+          <p>
+            {isSignUp
+              ? "Join the AI-powered research workspace."
+              : "Sign in to continue your research."
+            }
+          </p>
+
+        </div>
+
+
+        {/* Form */}
+
         <form
           onSubmit={handleSubmit}
           className="auth-form"
         >
 
-          {/* Email */}
+          {isSignUp && (
+
+            <div className="form-group">
+
+              <label htmlFor="fullName">
+                Full Name
+              </label>
+
+              <input
+                id="fullName"
+                type="text"
+                placeholder="Enter your full name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
+
+            </div>
+
+          )}
+
+
           <div className="form-group">
 
             <label htmlFor="email">
-              Email address
+              Email
             </label>
 
             <input
               id="email"
               type="email"
-              className="form-input"
-              placeholder="Enter your email"
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -77,25 +200,15 @@ function AuthGate({ children }) {
           </div>
 
 
-          {/* Password */}
           <div className="form-group">
 
-            <div className="password-label-row">
-
-              <label htmlFor="password">
-                Password
-              </label>
-
-              <span className="forgot-password">
-                Secure login
-              </span>
-
-            </div>
+            <label htmlFor="password">
+              Password
+            </label>
 
             <input
               id="password"
               type="password"
-              className="form-input"
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -106,66 +219,69 @@ function AuthGate({ children }) {
 
 
           {/* Error */}
-          {authError && (
-            <div className="auth-error">
-              <span className="error-icon">!</span>
 
-              <span>{authError}</span>
+          {authError && (
+
+            <div className="auth-error">
+              {authError}
             </div>
+
+          )}
+
+
+          {/* Success */}
+
+          {successMessage && (
+
+            <div className="auth-success">
+              {successMessage}
+            </div>
+
           )}
 
 
           {/* Submit */}
+
           <button
             type="submit"
-            className="auth-button"
+            className="auth-submit"
+            disabled={isSubmitting}
           >
-            <span>Sign in</span>
-            <span className="button-arrow">→</span>
+
+            {isSubmitting
+              ? "Please wait..."
+              : isSignUp
+                ? "Create Account"
+                : "Sign In"
+            }
+
           </button>
 
         </form>
 
 
-        {/* Divider */}
-        <div className="auth-divider">
-          <span>AI-powered research</span>
-        </div>
+        {/* Bottom switch */}
 
+        <div className="auth-switch">
 
-        {/* Features */}
-        <div className="auth-features">
+          {isSignUp
+            ? "Already have an account?"
+            : "Don't have an account?"
+          }
 
-          <div className="feature-item">
-            <div className="feature-icon">
-              ⌕
-            </div>
+          <button
+            type="button"
+            onClick={switchMode}
+          >
 
-            <div>
-              <strong>Smart Search</strong>
-              <span>Discover research papers</span>
-            </div>
-          </div>
+            {isSignUp
+              ? "Sign In"
+              : "Create Account"
+            }
 
-
-          <div className="feature-item">
-            <div className="feature-icon">
-              ✦
-            </div>
-
-            <div>
-              <strong>AI Insights</strong>
-              <span>Generate intelligent summaries</span>
-            </div>
-          </div>
+          </button>
 
         </div>
-
-
-        {/* Footer */}
-        <p className="auth-footer">
-          Autonomous Research Agent
-        </p>
 
       </div>
 
@@ -174,48 +290,39 @@ function AuthGate({ children }) {
 }
 
 
-/* =========================================
-   Application Content
-========================================= */
-
 function AppContent() {
+
   const [selectedPaperId, setSelectedPaperId] = useState(null);
 
-  return (
-    <div className="app">
+  return selectedPaperId ? (
 
-      {selectedPaperId ? (
+    <PaperDetail
+      paperId={selectedPaperId}
+      onBack={() => setSelectedPaperId(null)}
+    />
 
-        <PaperDetail
-          paperId={selectedPaperId}
-          onBack={() => setSelectedPaperId(null)}
-        />
+  ) : (
 
-      ) : (
+    <Dashboard
+      onSelectPaper={(paper) =>
+        setSelectedPaperId(paper.id)
+      }
+    />
 
-        <Dashboard
-          onSelectPaper={(paper) =>
-            setSelectedPaperId(paper.id)
-          }
-        />
-
-      )}
-
-    </div>
   );
 }
 
 
-/* =========================================
-   Root App
-========================================= */
-
 export default function App() {
+
   return (
+
     <AppProvider>
 
       <AuthGate>
+
         <AppContent />
+
       </AuthGate>
 
     </AppProvider>
