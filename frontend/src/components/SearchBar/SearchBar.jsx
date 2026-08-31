@@ -3,6 +3,7 @@
 // click; parent owns the actual search request via the onSearch callback.
 
 import React, { useState } from "react";
+import "./SearchBar.css";
 
 export default function SearchBar({ onSearch, isLoading = false, placeholder = "Search research papers..." }) {
   const [value, setValue] = useState("");

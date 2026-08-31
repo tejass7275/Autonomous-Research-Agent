@@ -14,7 +14,7 @@ const apiClient = axios.create({
 
 // Attach the bearer token (if present) to every outgoing request.
 apiClient.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem("access_token");
+  const token = localStorage.getItem("access_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -26,7 +26,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      sessionStorage.removeItem("access_token");
+      localStorage.removeItem("access_token");
       window.dispatchEvent(new CustomEvent("auth:expired"));
     }
     return Promise.reject(error);
@@ -38,7 +38,7 @@ apiClient.interceptors.response.use(
 // ---------------------------------------------------------------------------
 export async function login(email, password) {
   const { data } = await apiClient.post("/api/auth/login", { email, password });
-  sessionStorage.setItem("access_token", data.access_token);
+  localStorage.setItem("access_token", data.access_token);
   return data;
 }
 
@@ -52,7 +52,7 @@ export async function register(email, password, fullName) {
 }
 
 export function logout() {
-  sessionStorage.removeItem("access_token");
+  localStorage.removeItem("access_token");
 }
 
 // ---------------------------------------------------------------------------
@@ -61,6 +61,17 @@ export function logout() {
 export async function listPapers({ page = 1, pageSize = 10, source = null } = {}) {
   const { data } = await apiClient.get("/api/papers", {
     params: { page, page_size: pageSize, source },
+  });
+  return data;
+}
+
+// Fetches papers for a topic from arXiv/Semantic Scholar, indexes them into
+// FAISS, and persists their metadata to Postgres — all in one call. This is
+// the only supported way to populate the corpus; running the standalone
+// rag_engine ingest script directly leaves Postgres out of sync.
+export async function ingestPapers(query, maxResults = 10) {
+  const { data } = await apiClient.post("/api/papers/ingest", null, {
+    params: { query, max_results: maxResults },
   });
   return data;
 }

@@ -1,262 +1,107 @@
 // Dashboard.jsx
 // Main research workflow screen: search bar up top, paper results grid,
-// and a general-purpose insight panel for cross-paper questions.
+// and a general-purpose insight panel for cross-paper questions. When a
+// search returns no results, offers to fetch & index papers for that
+// query directly from the UI (calls POST /api/papers/ingest).
 
 import React, { useEffect, useState } from "react";
 import SearchBar from "../components/SearchBar/SearchBar";
 import PaperCard from "../components/PaperCard/PaperCard";
 import InsightPanel from "../components/InsightPanel/InsightPanel";
 import { usePaperSearch } from "../hooks/usePaperSearch";
+import { useIngestPapers } from "../hooks/useIngestPapers";
 import { listPapers } from "../api/client";
 
 export default function Dashboard({ onSelectPaper }) {
-  const {
-    results,
-    isLoading,
-    error,
-    lastQuery,
-    search,
-  } = usePaperSearch();
-
+  const { results, isLoading, error, lastQuery, search } = usePaperSearch();
+  const { ingest, isIngesting, error: ingestError, lastResult: ingestResult } = useIngestPapers();
   const [recentPapers, setRecentPapers] = useState([]);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
 
-  useEffect(() => {
+  const refreshRecentPapers = () => {
+    setIsLoadingRecent(true);
     listPapers({ page: 1, pageSize: 12 })
-      .then((data) => setRecentPapers(data.results || []))
+      .then((data) => setRecentPapers(data.results))
       .catch(() => setRecentPapers([]))
       .finally(() => setIsLoadingRecent(false));
+  };
+
+  useEffect(() => {
+    refreshRecentPapers();
   }, []);
 
-  const showingSearchResults = lastQuery.length > 0;
+  const handleIngestAndSearch = async () => {
+    const result = await ingest(lastQuery, 10);
+    if (result) {
+      // Re-run the search now that the corpus has (hopefully) new matches,
+      // and refresh the "recently indexed" grid in the background.
+      await search(lastQuery);
+      refreshRecentPapers();
+    }
+  };
 
-  const papersToShow = showingSearchResults
-    ? results.map((item, idx) => ({
-        ...item,
-        _key: item.paper?.id || idx,
-      }))
-    : recentPapers.map((paper) => ({
-        paper,
-        _key: paper.id,
-      }));
+  const showingSearchResults = lastQuery.length > 0;
+  const showEmptyState = showingSearchResults && !isLoading && results.length === 0 && !error;
 
   return (
     <div className="dashboard">
-
-      {/* =====================================
-          HEADER
-      ===================================== */}
-
       <header className="dashboard__header">
-
-        <div className="dashboard__header-content">
-
-          <div className="dashboard__brand">
-            <div className="dashboard__logo">
-              AI
-            </div>
-
-            <span>Autonomous Research Agent</span>
-          </div>
-
-          <div className="dashboard__hero">
-
-            <span className="dashboard__eyebrow">
-              AI-POWERED RESEARCH
-            </span>
-
-            <h1>
-              Research smarter.
-              <br />
-              Discover insights faster.
-            </h1>
-
-            <p className="dashboard__subtitle">
-              Discover, analyze, and summarize academic papers
-              with the power of AI.
-            </p>
-
-          </div>
-
-          {/* Search */}
-          <div className="dashboard__search">
-            <SearchBar
-              onSearch={search}
-              isLoading={isLoading}
-            />
-          </div>
-
-        </div>
-
+        <h1>Autonomous Research Agent</h1>
+        <p className="dashboard__subtitle">
+          Discover, analyze, and summarize academic papers with AI.
+        </p>
+        <SearchBar onSearch={search} isLoading={isLoading} />
       </header>
 
-
-      {/* =====================================
-          MAIN CONTENT
-      ===================================== */}
-
       <main className="dashboard__main">
-
-        {/* Papers */}
         <section className="dashboard__results">
+          <h2>{showingSearchResults ? `Results for "${lastQuery}"` : "Recently Indexed Papers"}</h2>
 
-          <div className="section-header">
+          {error && <p className="dashboard__error">{error}</p>}
 
-            <div>
-              <span className="section-label">
-                RESEARCH LIBRARY
-              </span>
+          {(isLoading || isLoadingRecent) && <p>Loading...</p>}
 
-              <h2>
-                {showingSearchResults
-                  ? `Results for "${lastQuery}"`
-                  : "Recently Indexed Papers"}
-              </h2>
-            </div>
-
-            <span className="paper-count">
-              {showingSearchResults
-                ? `${results.length} papers`
-                : `${recentPapers.length} papers`}
-            </span>
-
+          <div className="dashboard__grid">
+            {showingSearchResults
+              ? results.map((item, idx) => (
+                  <PaperCard
+                    key={item.paper.id || idx}
+                    paper={item.paper}
+                    matchScore={item.score}
+                    onClick={onSelectPaper}
+                  />
+                ))
+              : recentPapers.map((paper) => (
+                  <PaperCard key={paper.id} paper={paper} onClick={onSelectPaper} />
+                ))}
           </div>
 
-
-          {/* Error */}
-          {error && (
-            <div className="dashboard__error">
-              <span className="error-icon">!</span>
-              <span>{error}</span>
-            </div>
-          )}
-
-
-          {/* Loading */}
-          {(isLoading || isLoadingRecent) && (
-            <div className="dashboard__loading">
-
-              <div className="loading-spinner"></div>
-
-              <span>
-                {showingSearchResults
-                  ? "Searching research papers..."
-                  : "Loading indexed papers..."}
-              </span>
-
-            </div>
-          )}
-
-
-          {/* Papers */}
-          {!isLoading &&
-            !isLoadingRecent &&
-            papersToShow.length > 0 && (
-
-              <div className="dashboard__grid">
-
-                {showingSearchResults
-
-                  ? results.map((item, idx) => (
-                      <PaperCard
-                        key={item.paper?.id || idx}
-                        paper={item.paper}
-                        matchScore={item.score}
-                        onClick={onSelectPaper}
-                      />
-                    ))
-
-                  : recentPapers.map((paper) => (
-                      <PaperCard
-                        key={paper.id}
-                        paper={paper}
-                        onClick={onSelectPaper}
-                      />
-                    ))}
-
-              </div>
-
-            )}
-
-
-          {/* Empty */}
-          {showingSearchResults &&
-            !isLoading &&
-            results.length === 0 &&
-            !error && (
-
-              <div className="dashboard__empty">
-
-                <div className="empty-icon">
-                  ⌕
-                </div>
-
-                <h3>
-                  No matching papers found
-                </h3>
-
-                <p>
-                  Try using different keywords or a broader
-                  research topic.
+          {showEmptyState && (
+            <div className="dashboard__empty-state">
+              <p className="dashboard__empty">
+                No indexed papers match "{lastQuery}" yet.
+              </p>
+              <button
+                onClick={handleIngestAndSearch}
+                className="dashboard__ingest-button"
+                disabled={isIngesting}
+              >
+                {isIngesting ? "Fetching & indexing papers..." : `Fetch & index papers on "${lastQuery}"`}
+              </button>
+              {ingestError && <p className="dashboard__error">{ingestError}</p>}
+              {ingestResult && ingestResult.total === 0 && (
+                <p className="dashboard__error">
+                  No papers with a usable PDF were found for this topic. Try a broader query.
                 </p>
-
-              </div>
-
-            )}
-
+              )}
+            </div>
+          )}
         </section>
 
-
-        {/* =====================================
-            AI INSIGHT SIDEBAR
-        ===================================== */}
-
         <aside className="dashboard__sidebar">
-
-          <div className="sidebar-header">
-
-            <div className="sidebar-icon">
-              ✦
-            </div>
-
-            <div>
-              <span className="section-label">
-                AI ASSISTANT
-              </span>
-
-              <h2>
-                Research Assistant
-              </h2>
-            </div>
-
-          </div>
-
-          <p className="sidebar-description">
-            Ask questions across your research papers and
-            get AI-powered insights.
-          </p>
-
           <InsightPanel />
-
         </aside>
-
       </main>
-
-
-      {/* =====================================
-          FOOTER
-      ===================================== */}
-
-      <footer className="dashboard__footer">
-        <span>
-          Autonomous Research Agent
-        </span>
-
-        <span>
-          AI-powered academic research
-        </span>
-      </footer>
-
     </div>
   );
 }

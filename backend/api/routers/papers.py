@@ -19,8 +19,15 @@ from api.schemas.schemas import PaperBase, PaperResponse, PaperListResponse
 from api.core.security import get_current_user_id
 from api.core.config import settings
 
+# Member 1's RAG service facade
+from rag_engine.api.service import get_rag_service, RAGService
+
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/papers", tags=["papers"])
+
+
+def _get_service() -> RAGService:
+    return get_rag_service(settings.FAISS_INDEX_PATH, settings.GROQ_API_KEY)
 
 
 @router.get("", response_model=PaperListResponse)
@@ -96,3 +103,68 @@ def delete_paper(
     db.delete(paper)
     db.commit()
     return None
+
+
+@router.post("/ingest", response_model=PaperListResponse, status_code=status.HTTP_201_CREATED)
+def ingest_papers(
+    query: str = Query(..., min_length=1, max_length=500, description="Topic to fetch and index papers for"),
+    max_results: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+    service: RAGService = Depends(_get_service),
+):
+    """
+    Single entry point for populating the corpus: fetches papers for a query,
+    indexes them into FAISS, AND persists their metadata to Postgres.
+
+    This replaces running `python -m rag_engine.api.ingest_pipeline` as a
+    separate manual step — that script only writes to FAISS, so papers
+    indexed that way never show up in /api/search (which requires a
+    matching Postgres row). Use this endpoint instead so both stores stay
+    in sync automatically.
+    """
+    result = service.ingest(query, max_results=max_results)
+
+    saved_papers = []
+    for paper_result in result.papers:
+        if paper_result.status != "indexed":
+            logger.info("Skipping Postgres insert for '%s' (status=%s)", paper_result.title[:60], paper_result.status)
+            continue
+
+        existing = db.query(Paper).filter(Paper.source_id == paper_result.source_id).first()
+        if existing:
+            saved_papers.append(existing)
+            continue
+
+        paper = Paper(
+            source_id=paper_result.source_id,
+            source=paper_result.source,
+            title=paper_result.title,
+            authors=paper_result.authors,
+            abstract=paper_result.abstract,
+            pdf_url=paper_result.pdf_url,
+            published_date=paper_result.published_date,
+            is_indexed="indexed",
+        )
+        db.add(paper)
+        try:
+            db.commit()
+            db.refresh(paper)
+            saved_papers.append(paper)
+        except IntegrityError:
+            db.rollback()
+            existing = db.query(Paper).filter(Paper.source_id == paper_result.source_id).first()
+            if existing:
+                saved_papers.append(existing)
+
+    logger.info(
+        "Ingest complete for query='%s': %d/%d papers saved to Postgres",
+        query, len(saved_papers), len(result.papers),
+    )
+
+    return PaperListResponse(
+        total=len(saved_papers),
+        page=1,
+        page_size=len(saved_papers) or 1,
+        results=saved_papers,
+    )
