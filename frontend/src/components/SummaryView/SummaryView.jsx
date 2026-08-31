@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { summarizePaper } from "../../api/client";
+import "./SummaryView.css";
 
 export default function SummaryView({ paper }) {
   const [summary, setSummary] = useState(paper?.ai_summary || null);

@@ -4,6 +4,7 @@
 
 import React, { useState } from "react";
 import { askQuestion } from "../../api/client";
+import "./InsightPanel.css";
 
 export default function InsightPanel({ paperId = null, paperTitle = null }) {
   const [question, setQuestion] = useState("");

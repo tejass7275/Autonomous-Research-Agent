@@ -3,6 +3,7 @@
 // a clickable card. Used in search results and the paper explorer grid.
 
 import React from "react";
+import "./PaperCard.css";
 
 function truncate(text, maxLength) {
   if (!text) return "";

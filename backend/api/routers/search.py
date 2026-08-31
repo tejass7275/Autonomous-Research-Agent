@@ -1,12 +1,13 @@
 """
 search.py
-Endpoints for discovering papers: fetching new papers from external sources
-(arXiv/Semantic Scholar) and running semantic search over the indexed corpus.
+Endpoints for running semantic search over the indexed corpus. Delegates
+all RAG work to rag_engine.api.service.RAGService — no direct dependency
+on embedder/FAISS internals here.
 
-NOTE: This router calls into Member 1's rag_engine package (retrieval_chain,
-paper_fetcher). Those imports assume the rag_engine package is importable
-from the backend root — adjust the import path if the final repo layout
-differs.
+Note: results are filtered against Postgres (a FAISS hit is only returned
+if a matching Paper row exists). Use POST /api/papers/ingest to populate
+both stores together — the standalone `python -m rag_engine.api.ingest_pipeline`
+script only writes to FAISS and will leave search results empty.
 """
 
 import logging
@@ -20,32 +21,17 @@ from api.models.paper import Paper
 from api.models.query_log import QueryLog
 from api.schemas.schemas import SearchRequest, SearchResponse, SearchResultItem, PaperResponse
 from api.core.security import get_current_user_id
-
-# Member 1's RAG components
-from rag_engine.chains.retrieval_chain import RetrievalChain
-from rag_engine.embeddings.embedder import Embedder
-from rag_engine.embeddings.faiss_store import FAISSStore
 from api.core.config import settings
+
+# Member 1's RAG service facade
+from rag_engine.api.service import get_rag_service, RAGService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/search", tags=["search"])
 
-# Lazily initialized singletons for the retrieval pipeline
-_embedder: Embedder = None
-_store: FAISSStore = None
-_retrieval_chain: RetrievalChain = None
 
-
-def _get_retrieval_chain() -> RetrievalChain:
-    """Lazy-load the embedder/FAISS store once per process, not per request."""
-    global _embedder, _store, _retrieval_chain
-    if _retrieval_chain is None:
-        _embedder = Embedder()
-        _store = FAISSStore(embedding_dim=_embedder.embedding_dim, index_path=settings.FAISS_INDEX_PATH)
-        if not _store.load():
-            logger.warning("FAISS index not found at %s — search will return no results until ingested", settings.FAISS_INDEX_PATH)
-        _retrieval_chain = RetrievalChain(_embedder, _store)
-    return _retrieval_chain
+def _get_service() -> RAGService:
+    return get_rag_service(settings.FAISS_INDEX_PATH, settings.GROQ_API_KEY)
 
 
 @router.post("", response_model=SearchResponse)
@@ -53,29 +39,37 @@ def semantic_search(
     request: SearchRequest,
     db: Session = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
+    service: RAGService = Depends(_get_service),
 ):
     """
     Run context-aware semantic search over the indexed paper corpus and
     return matching chunks paired with their parent paper's metadata.
     """
-    chain = _get_retrieval_chain()
-    chunks = chain.retrieve(request.query, top_k=request.top_k)
+    result = service.search(request.query, top_k=request.top_k)
 
-    if not chunks:
+    if not result.hits:
         return SearchResponse(query=request.query, results=[])
 
     results = []
-    for chunk in chunks:
-        source_id = chunk.metadata.get("source_id")
-        paper = db.query(Paper).filter(Paper.source_id == source_id).first()
+    skipped = 0
+    for hit in result.hits:
+        paper = db.query(Paper).filter(Paper.source_id == hit.source_id).first()
         if paper is None:
+            skipped += 1
             continue
         results.append(
             SearchResultItem(
-                chunk_text=chunk.text,
-                score=chunk.score,
+                chunk_text=hit.chunk_text,
+                score=hit.score,
                 paper=PaperResponse.model_validate(paper),
             )
+        )
+
+    if skipped:
+        logger.warning(
+            "Skipped %d FAISS hit(s) with no matching Postgres row — "
+            "run POST /api/papers/ingest instead of the standalone ingest script",
+            skipped,
         )
 
     # Log the search for research history
