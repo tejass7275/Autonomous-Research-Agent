@@ -885,6 +885,41 @@ button {
   border-radius: 13px;
 }
 
+/* Ingest flow: shown when a search returns no indexed papers, lets the
+   user fetch + index papers on that topic directly from the empty state. */
+.dashboard__empty-state {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  border: 1px dashed #d0d5dd;
+  border-radius: 10px;
+  text-align: center;
+  background: #ffffff;
+}
+
+.dashboard__ingest-button {
+  margin-top: 0.75rem;
+  padding: 0.6rem 1.25rem;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.dashboard__ingest-button:hover:not(:disabled) {
+  background: #4338ca;
+  transform: translateY(-1px);
+}
+
+.dashboard__ingest-button:disabled {
+  background: #a5a5a5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .empty-icon {
   width: 46px;
   height: 46px;
