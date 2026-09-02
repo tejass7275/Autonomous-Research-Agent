@@ -46,11 +46,17 @@ export default function Dashboard({ onSelectPaper }) {
   return (
     <div className="dashboard">
       <header className="dashboard__header">
-        <h1>Autonomous Research Agent</h1>
-        <p className="dashboard__subtitle">
-          Discover, analyze, and summarize academic papers with AI.
-        </p>
-        <SearchBar onSearch={search} isLoading={isLoading} />
+        <div className="dashboard__header-top">
+          <div className="dashboard__header-text">
+            <h1>Autonomous Research Agent</h1>
+            <p className="dashboard__subtitle">
+              Discover, analyze, and summarize academic papers with AI.
+            </p>
+          </div>
+          <div className="dashboard__header-search">
+            <SearchBar onSearch={search} isLoading={isLoading} />
+          </div>
+        </div>
       </header>
 
       <main className="dashboard__main">
