@@ -64,3 +64,5 @@ logs/
 
 # ── Jupyter (if used for experimentation) ─────────────────────────
 .ipynb_checkpoints/
+__pycache__/
+*.pyc
