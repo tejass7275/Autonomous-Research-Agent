@@ -1,0 +1,385 @@
+/* =========================================================
+   DARK THEME
+   ---------------------------------------------------------
+   Active only when <html data-theme="dark"> (toggled by
+   components/ThemeToggle + hooks/useTheme.js). Light mode is
+   completely untouched — nothing here applies without that attribute.
+
+   Every selector is prefixed with html[data-theme="dark"] so it
+   out-ranks the light rules regardless of file order. Hover/focus
+   states are written out explicitly for the same reason.
+
+   To tweak the look, edit the variables in the first block.
+   ========================================================= */
+
+html[data-theme="dark"] {
+  color-scheme: dark; /* dark native scrollbars, form controls, autofill */
+
+  --t-bg: #0a0d14;
+  --t-surface: #11151e;
+  --t-surface-2: #161b27;
+  --t-surface-3: #1e2433;
+  --t-border: #252c3b;
+  --t-border-strong: #343d52;
+
+  --t-text: #e6e9f0;
+  --t-text-strong: #f5f7fb;
+  --t-text-body: #c3cad8;
+  --t-text-muted: #a0a9ba;
+  --t-text-faint: #7b8598;
+
+  --t-accent-text: #a5b4fc; /* links / labels that were indigo on white */
+  --t-blue-text: #7cb2ff; /* labels that were blue on white */
+  --t-accent-soft: rgba(99, 102, 241, 0.16);
+
+  --t-danger-bg: rgba(220, 38, 38, 0.12);
+  --t-danger-border: rgba(248, 113, 113, 0.35);
+  --t-danger-text: #fca5a5;
+  --t-success-bg: rgba(16, 185, 129, 0.13);
+  --t-success-border: rgba(52, 211, 153, 0.35);
+  --t-success-text: #6ee7b7;
+}
+
+/* ---------- Page ---------- */
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+  background: var(--t-bg);
+  color: var(--t-text);
+}
+
+html[data-theme="dark"] h1,
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3,
+html[data-theme="dark"] h4 {
+  color: var(--t-text-strong);
+}
+
+html[data-theme="dark"] a {
+  color: var(--t-accent-text);
+}
+
+/* ---------- Form controls (inputs, textareas) ---------- */
+html[data-theme="dark"] .form-group input,
+html[data-theme="dark"] .form-input,
+html[data-theme="dark"] .search-input,
+html[data-theme="dark"] .search-bar__input,
+html[data-theme="dark"] .insight-panel__textarea,
+html[data-theme="dark"] .auth-gate__form input {
+  background: var(--t-surface-2);
+  border-color: var(--t-border-strong);
+  color: var(--t-text);
+}
+
+html[data-theme="dark"] .form-group input::placeholder,
+html[data-theme="dark"] .form-input::placeholder,
+html[data-theme="dark"] .search-input::placeholder,
+html[data-theme="dark"] .search-bar__input::placeholder,
+html[data-theme="dark"] .insight-panel__textarea::placeholder,
+html[data-theme="dark"] .auth-gate__form input::placeholder {
+  color: var(--t-text-faint);
+}
+
+html[data-theme="dark"] .form-group input:hover,
+html[data-theme="dark"] .form-input:hover {
+  border-color: #475169;
+}
+
+html[data-theme="dark"] .form-group input:focus,
+html[data-theme="dark"] .form-input:focus,
+html[data-theme="dark"] .search-input:focus,
+html[data-theme="dark"] .search-bar__input:focus,
+html[data-theme="dark"] .insight-panel__textarea:focus,
+html[data-theme="dark"] .auth-gate__form input:focus {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.22);
+  outline: none;
+}
+
+/* Browsers paint autofilled fields white/yellow — keep them dark */
+html[data-theme="dark"] input:-webkit-autofill,
+html[data-theme="dark"] input:-webkit-autofill:hover,
+html[data-theme="dark"] input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--t-surface-2) inset;
+  -webkit-text-fill-color: var(--t-text);
+  caret-color: var(--t-text);
+}
+
+/* Disabled accent buttons (light mode uses a light grey that glares) */
+html[data-theme="dark"] .search-bar__button:disabled,
+html[data-theme="dark"] .insight-panel__button:disabled,
+html[data-theme="dark"] .dashboard__ingest-button:disabled {
+  background: #2a3142;
+  color: #98a2b6;
+  opacity: 1;
+}
+
+/* ---------- Auth screens ---------- */
+html[data-theme="dark"] .auth-page {
+  background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.22), transparent 38%),
+    radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.14), transparent 38%),
+    var(--t-bg);
+}
+
+html[data-theme="dark"] .auth-circle-one {
+  background: rgba(99, 102, 241, 0.14);
+}
+
+html[data-theme="dark"] .auth-circle-two {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+html[data-theme="dark"] .auth-card,
+html[data-theme="dark"] .auth-gate__form {
+  background: rgba(17, 21, 30, 0.96);
+  border-color: var(--t-border);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="dark"] .auth-brand p,
+html[data-theme="dark"] .auth-header p,
+html[data-theme="dark"] .auth-heading p,
+html[data-theme="dark"] .auth-switch {
+  color: var(--t-text-muted);
+}
+
+html[data-theme="dark"] .auth-tabs {
+  background: var(--t-surface-3);
+}
+
+html[data-theme="dark"] .auth-tab {
+  color: var(--t-text-muted);
+}
+
+html[data-theme="dark"] .auth-tab:hover {
+  color: var(--t-text);
+}
+
+html[data-theme="dark"] .auth-tab.active {
+  background: var(--t-surface);
+  color: var(--t-accent-text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .form-group label {
+  color: var(--t-text);
+}
+
+html[data-theme="dark"] .auth-switch button {
+  color: var(--t-accent-text);
+}
+
+html[data-theme="dark"] .auth-divider::before,
+html[data-theme="dark"] .auth-divider::after {
+  background: var(--t-border);
+}
+
+html[data-theme="dark"] .feature-item:hover {
+  background: var(--t-surface-2);
+}
+
+html[data-theme="dark"] .feature-icon {
+  background: var(--t-accent-soft);
+  color: var(--t-accent-text);
+}
+
+html[data-theme="dark"] .feature-item strong {
+  color: var(--t-text);
+}
+
+html[data-theme="dark"] .auth-error,
+html[data-theme="dark"] .dashboard__error {
+  background: var(--t-danger-bg);
+  border-color: var(--t-danger-border);
+  color: var(--t-danger-text);
+}
+
+html[data-theme="dark"] .auth-gate__error,
+html[data-theme="dark"] .insight-panel__error {
+  color: var(--t-danger-text);
+}
+
+html[data-theme="dark"] .auth-success {
+  background: var(--t-success-bg);
+  border-color: var(--t-success-border);
+  color: var(--t-success-text);
+}
+
+/* ---------- Dashboard shell ---------- */
+html[data-theme="dark"] .dashboard {
+  background: var(--t-bg);
+  color: var(--t-text);
+}
+
+html[data-theme="dark"] .dashboard__header {
+  background: linear-gradient(135deg, #0f1320 0%, #0c1019 100%);
+  border-bottom-color: var(--t-border);
+}
+
+html[data-theme="dark"] .navbar {
+  background: var(--t-surface);
+  border-bottom-color: var(--t-border);
+}
+
+html[data-theme="dark"] .navbar-brand,
+html[data-theme="dark"] .dashboard__brand {
+  color: var(--t-text-strong);
+}
+
+html[data-theme="dark"] .dashboard__subtitle,
+html[data-theme="dark"] .dashboard-header p,
+html[data-theme="dark"] .sidebar-description,
+html[data-theme="dark"] .loading,
+html[data-theme="dark"] .dashboard__loading,
+html[data-theme="dark"] .empty-state {
+  color: var(--t-text-muted);
+}
+
+html[data-theme="dark"] .dashboard__eyebrow,
+html[data-theme="dark"] .section-label {
+  color: var(--t-blue-text);
+}
+
+html[data-theme="dark"] .dashboard__search {
+  background: var(--t-surface);
+  border-color: var(--t-border);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .paper-count,
+html[data-theme="dark"] .paper-year,
+html[data-theme="dark"] .summary-view__badge,
+html[data-theme="dark"] .empty-icon {
+  background: var(--t-accent-soft);
+  color: var(--t-accent-text);
+}
+
+html[data-theme="dark"] .dashboard__footer {
+  color: var(--t-text-faint);
+  border-top-color: var(--t-border);
+}
+
+html[data-theme="dark"] .loading-spinner {
+  border-color: var(--t-border);
+  border-top-color: #818cf8;
+}
+
+/* ---------- Paper cards ---------- */
+html[data-theme="dark"] .paper-card,
+html[data-theme="dark"] .dashboard__grid > * {
+  background: var(--t-surface);
+  border-color: var(--t-border);
+}
+
+html[data-theme="dark"] .paper-card:hover,
+html[data-theme="dark"] .dashboard__grid > *:hover {
+  border-color: #3d4a78;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme="dark"] .paper-card__title {
+  color: var(--t-text-strong);
+}
+
+html[data-theme="dark"] .paper-card__source,
+html[data-theme="dark"] .paper-card__authors,
+html[data-theme="dark"] .paper-authors {
+  color: var(--t-text-muted);
+}
+
+html[data-theme="dark"] .paper-card__abstract {
+  color: var(--t-text-body);
+}
+
+html[data-theme="dark"] .paper-card__score {
+  color: var(--t-accent-text);
+}
+
+html[data-theme="dark"] .paper-card__badge {
+  background: var(--t-success-bg);
+  color: var(--t-success-text);
+}
+
+/* ---------- Sidebar + AI assistant ---------- */
+html[data-theme="dark"] .dashboard__sidebar {
+  background: var(--t-surface);
+  border-color: var(--t-border);
+  box-shadow: 0 7px 22px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .sidebar-icon {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.24), rgba(129, 140, 248, 0.12));
+  color: var(--t-accent-text);
+}
+
+html[data-theme="dark"] .insight-panel {
+  background: var(--t-surface-2);
+  border-color: var(--t-border);
+}
+
+html[data-theme="dark"] .insight-panel__heading {
+  color: var(--t-text-strong);
+}
+
+html[data-theme="dark"] .insight-panel__answer {
+  border-top-color: var(--t-border);
+  color: var(--t-text-body);
+}
+
+html[data-theme="dark"] .insight-panel__sources {
+  color: var(--t-text-faint);
+}
+
+/* ---------- Empty state + ingest ---------- */
+html[data-theme="dark"] .dashboard__empty-state {
+  background: var(--t-surface);
+  border-color: var(--t-border-strong);
+}
+
+html[data-theme="dark"] .dashboard__empty {
+  background: var(--t-surface-2);
+  border-color: var(--t-border-strong);
+  color: var(--t-text-muted);
+}
+
+/* ---------- Paper detail + summary ---------- */
+html[data-theme="dark"] .paper-detail__back,
+html[data-theme="dark"] .paper-detail__pdf-link {
+  color: var(--t-accent-text);
+}
+
+/* Without this the browser's default grey button background shows through */
+html[data-theme="dark"] .paper-detail__back {
+  background: transparent;
+  border: 0;
+}
+
+html[data-theme="dark"] .paper-detail__source,
+html[data-theme="dark"] .paper-detail__authors,
+html[data-theme="dark"] .paper-detail__date {
+  color: var(--t-text-muted);
+}
+
+html[data-theme="dark"] .summary-view {
+  border-color: var(--t-border);
+}
+
+html[data-theme="dark"] .summary-view--loading,
+html[data-theme="dark"] .summary-view--error {
+  color: var(--t-text-muted);
+}
+
+html[data-theme="dark"] .summary-view__content p {
+  color: var(--t-text-body);
+}
+
+html[data-theme="dark"] .summary-view__regenerate,
+html[data-theme="dark"] .summary-view__retry {
+  background: var(--t-surface-2);
+  border-color: var(--t-border-strong);
+  color: var(--t-text);
+}
+
+html[data-theme="dark"] .summary-view__regenerate:hover,
+html[data-theme="dark"] .summary-view__retry:hover {
+  background: var(--t-surface-3);
+}
